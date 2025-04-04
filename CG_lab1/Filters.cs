@@ -48,7 +48,7 @@ namespace CG_lab1
 
     }
 
-    class MatrixFilter : Filters
+    public class MatrixFilter : Filters
     {
         protected float[,] kernel = null;
         protected MatrixFilter() { }
@@ -604,59 +604,60 @@ namespace CG_lab1
         }
     }
 
-    public class MedianFilter
+    public class MedianFilter : MatrixFilter
     {
         private int kernelSize;
 
-        public MedianFilter(int size = 3)
+        public MedianFilter(int size = 3) : base(CreateKernel(size))
         {
             kernelSize = size;
         }
 
-        public Bitmap ApplyMedianFilter(Bitmap sourceImage, BackgroundWorker worker)
+        private static float[,] CreateKernel(int size)
         {
-            if (sourceImage == null) return null; // Проверка на null
+            // Создаем единичный (или другой) ядро для фильтрации
+            float[,] kernel = new float[size, size];
+            for (int i = 0; i < size; i++)
+                for (int j = 0; j < size; j++)
+                    kernel[i, j] = 1; // Можно настроить ядро по вашему усмотрению
+            return kernel;
+        }
 
-            Bitmap resultImage = new Bitmap(sourceImage.Width, sourceImage.Height);
+        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        {
             int radius = kernelSize / 2;
+            List<int> R = new List<int>();
+            List<int> G = new List<int>();
+            List<int> B = new List<int>();
 
-            for (int x = radius; x < sourceImage.Width - radius; x++)
+            for (int i = -radius; i <= radius; i++)
             {
-                for (int y = radius; y < sourceImage.Height - radius; y++)
+                for (int j = -radius; j <= radius; j++)
                 {
-                    if (worker.CancellationPending)
-                    {
-                        return null; // Проверка на отмену
-                    }
-
-                    List<int> R = new List<int>();
-                    List<int> G = new List<int>();
-                    List<int> B = new List<int>();
-
-                    for (int i = -radius; i <= radius; i++)
-                    {
-                        for (int j = -radius; j <= radius; j++)
-                        {
-                            Color pixel = sourceImage.GetPixel(x + i, y + j);
-                            R.Add(pixel.R);
-                            G.Add(pixel.G);
-                            B.Add(pixel.B);
-                        }
-                    }
-
-                    R.Sort();
-                    G.Sort();
-                    B.Sort();
-                    int medianIndex = R.Count / 2;
-
-                    resultImage.SetPixel(x, y, Color.FromArgb(R[medianIndex], G[medianIndex], B[medianIndex]));
+                    int idX = Clamp(x + i, 0, sourceImage.Width - 1);
+                    int idY = Clamp(y + j, 0, sourceImage.Height - 1);
+                    Color pixel = sourceImage.GetPixel(idX, idY);
+                    R.Add(pixel.R);
+                    G.Add(pixel.G);
+                    B.Add(pixel.B);
                 }
-
-                // Обновляем прогресс
-                worker.ReportProgress((int)((float)x / (sourceImage.Width - kernelSize) * 100));
             }
 
-            return resultImage; // Возвращаем результирующее изображение
+            R.Sort();
+            G.Sort();
+            B.Sort();
+            int medianIndex = R.Count / 2;
+
+            return Color.FromArgb(
+                Clamp(R[medianIndex], 0, 255),
+                Clamp(G[medianIndex], 0, 255),
+                Clamp(B[medianIndex], 0, 255)
+            );
+        }
+
+        public Bitmap ApplyMedianFilter(Bitmap sourceImage, BackgroundWorker worker)
+        {
+            return processImage(sourceImage, worker);
         }
     }
 

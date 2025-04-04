@@ -219,9 +219,12 @@ namespace CG_lab1
         {
             SaveImageHistory();
             MedianFilter medianFilter = new MedianFilter(3);
-            Bitmap resultImage = medianFilter.ApplyMedianFilter(image, backgroundWorker1);
-            pictureBox1.Image = resultImage;
-            pictureBox1.Refresh();
+            backgroundWorker1.RunWorkerAsync(medianFilter);
+
+
+            //Bitmap resultImage = medianFilter.ApplyMedianFilter(image, backgroundWorker1);
+            //pictureBox1.Image = resultImage;
+            //pictureBox1.Refresh();
         }
 
         private void идеальныйОтражательToolStripMenuItem_Click(object sender, EventArgs e)
@@ -237,8 +240,7 @@ namespace CG_lab1
             Filters filter = new GlassEffect();
             backgroundWorker1.RunWorkerAsync(filter);
         }
-
-        private void отменаПоследнегоДействияToolStripMenuItem_Click(object sender, EventArgs e)
+        private void button3_Click(object sender, EventArgs e)
         {
             UndoLastChange();
         }
