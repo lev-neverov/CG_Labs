@@ -11,7 +11,7 @@ namespace CG_lab1
 {
     public abstract class Filters
     {
-        protected abstract Color calculateNewPixelColor(Bitmap sourceImage, int x, int y);
+        public abstract Color calculateNewPixelColor(Bitmap sourceImage, int x, int y);
 
         public int Clamp(int value, int min, int max)
         {
@@ -56,7 +56,7 @@ namespace CG_lab1
         {
             this.kernel = kernel;
         }
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             int radiusX = kernel.GetLength(0) / 2;
             int radiusY = kernel.GetLength(1) / 2;
@@ -83,7 +83,7 @@ namespace CG_lab1
 
     class InvertFilter : Filters
     {
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             Color sourceColor = sourceImage.GetPixel(x, y);
             Color resultColor = Color.FromArgb(255 - sourceColor.R, 255 - sourceColor.G, 255 - sourceColor.B);
@@ -94,7 +94,7 @@ namespace CG_lab1
 
     class GrayScaleFilter : Filters
     {
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             Color sourceColor = sourceImage.GetPixel(x, y);
             int grayValue = (int)(0.36 * sourceColor.R + 0.53 * sourceColor.G + 0.11 * sourceColor.B);
@@ -105,7 +105,7 @@ namespace CG_lab1
 
     class SepiaFilter : Filters
     {
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             Color sourceColor = sourceImage.GetPixel(x, y);
             int grayValue = (int)(0.36 * sourceColor.R + 0.53 * sourceColor.G + 0.11 * sourceColor.B);
@@ -125,7 +125,7 @@ namespace CG_lab1
 
     class Brightness : Filters
     {
-        protected override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
+        public override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
         {
             Color sourcecolor = sourceimage.GetPixel(i, j);
             double R = sourcecolor.R;
@@ -269,7 +269,7 @@ namespace CG_lab1
             }
             return resultimage;
         }
-        protected override Color calculateNewPixelColor(Bitmap resultimage, int i, int j)
+        public override Color calculateNewPixelColor(Bitmap resultimage, int i, int j)
         {
             Bitmap sourceimage;
             sourceimage = resultimage;
@@ -320,7 +320,7 @@ namespace CG_lab1
             result[2] = maxB;
             return result;
         }
-        protected override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
+        public override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
         {
             Color sourcecolor = sourceimage.GetPixel(i, j);
             byte[] colors = new byte[3];
@@ -338,7 +338,7 @@ namespace CG_lab1
     class GlassEffect : Filters
     {
         Random rnd = new Random();
-        protected override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
+        public override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
         {
             
             double k = rnd.NextDouble();
@@ -367,7 +367,7 @@ namespace CG_lab1
                     structuringElement[i, j] = 1;
         }
 
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             int max = 0;
             int offset = elementSize / 2;
@@ -439,7 +439,7 @@ namespace CG_lab1
                     structuringElement[i, j] = 1;
         }
 
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             int min = 255; // Инициализируем минимальное значение максимальным
             int offset = elementSize / 2;
@@ -510,7 +510,7 @@ namespace CG_lab1
             dilation = new DilationFilter(size);
         }
 
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             return sourceImage.GetPixel(x, y); // Возвращаем оригинальный цвет, так как обработка происходит в методах ApplyOpening
         }
@@ -537,7 +537,7 @@ namespace CG_lab1
             erosion = new ErosionFilter(size);
         }
 
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             return sourceImage.GetPixel(x, y); // Этот метод не используется в процессе закрытия
         }
@@ -623,7 +623,7 @@ namespace CG_lab1
             return kernel;
         }
 
-        protected override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
         {
             int radius = kernelSize / 2;
             List<int> R = new List<int>();
@@ -672,7 +672,7 @@ namespace CG_lab1
             result[2] = maxB;
             return result;
         }
-        protected override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
+        public override Color calculateNewPixelColor(Bitmap sourceimage, int i, int j)
         {
             Color sourcecolor = sourceimage.GetPixel(i, j);
             int[] colors = new int[3];
@@ -686,6 +686,77 @@ namespace CG_lab1
                                                Clamp((int)(B * 255 / Math.Max((int)colors[2], 1)), 0, 255));
             return resultcolor;
         }
+
     }
+
+    public class LinearStretching : Filters
+    {
+        private int minR, maxR, minG, maxG, minB, maxB;
+
+        public void FindMinMaxValues(Bitmap sourceImage)
+        {
+            minR = minG = minB = 255;
+            maxR = maxG = maxB = 0;
+
+            for (int x = 0; x < sourceImage.Width; x++)
+            {
+                for (int y = 0; y < sourceImage.Height; y++)
+                {
+                    Color pixelColor = sourceImage.GetPixel(x, y);
+
+                    if (pixelColor.R < minR) minR = pixelColor.R;
+                    if (pixelColor.G < minG) minG = pixelColor.G;
+                    if (pixelColor.B < minB) minB = pixelColor.B;
+
+                    if (pixelColor.R > maxR) maxR = pixelColor.R;
+                    if (pixelColor.G > maxG) maxG = pixelColor.G;
+                    if (pixelColor.B > maxB) maxB = pixelColor.B;
+                }
+            }
+        }
+
+        public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
+        {
+            // Получаем цвет исходного пикселя
+            Color sourceColor = sourceImage.GetPixel(x, y);
+
+            // Применяем линейное растяжение с использованием найденных min и max значений
+            int newR = (maxR - minR > 0) ? Clamp((sourceColor.R - minR) * 255 / (maxR - minR), 0, 255) : sourceColor.R;
+            int newG = (maxG - minG > 0) ? Clamp((sourceColor.G - minG) * 255 / (maxG - minG), 0, 255) : sourceColor.G;
+            int newB = (maxB - minB > 0) ? Clamp((sourceColor.B - minB) * 255 / (maxB - minB), 0, 255) : sourceColor.B;
+
+            return Color.FromArgb(newR, newG, newB);
+        }
+
+        public Bitmap ApplyLinearStretching(Bitmap sourceImage) //, BackgroundWorker worker)
+        {
+            // Находим минимальные и максимальные значения
+            FindMinMaxValues(sourceImage);
+
+            Bitmap resultImage = new Bitmap(sourceImage.Width, sourceImage.Height);
+
+            for (int x = 0; x < sourceImage.Width; x++)
+            {
+                for (int y = 0; y < sourceImage.Height; y++)
+                {
+                    //if (worker.CancellationPending)
+                    //{
+                    //    return null; // Возвращаем null, если отмена была запрошена
+                    //}
+
+                    Color newColor = calculateNewPixelColor(sourceImage, x, y);
+                    resultImage.SetPixel(x, y, newColor);
+                }
+
+                // Обновляем прогресс
+                int progressPercentage = (int)((float)x / sourceImage.Width * 100);
+                //worker.ReportProgress(progressPercentage);
+            }
+            //worker.CancelAsync();
+
+            return resultImage;
+        }
+    }
+
 }
 

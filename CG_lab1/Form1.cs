@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CG_lab1;
 
 namespace CG_lab1
 {
@@ -192,6 +193,8 @@ namespace CG_lab1
             Bitmap resultImage = opening.ApplyOpening(image, backgroundWorker1);
             pictureBox1.Image = resultImage;
             pictureBox1.Refresh();
+            backgroundWorker1.CancelAsync();
+
             //backgroundWorker1.RunWorkerAsync(opening);
         }
 
@@ -202,6 +205,8 @@ namespace CG_lab1
             Bitmap resultImage = opening.ApplyOpening(image, backgroundWorker1);
             pictureBox1.Image = resultImage;
             pictureBox1.Refresh();
+            backgroundWorker1.CancelAsync();
+
             //backgroundWorker1.RunWorkerAsync(closing);
         }
 
@@ -212,6 +217,7 @@ namespace CG_lab1
             Bitmap resultImage = gradient.ApplyGradient(image, backgroundWorker1);
             pictureBox1.Image = resultImage;
             pictureBox1.Refresh();
+            backgroundWorker1.CancelAsync();
             //backgroundWorker1.RunWorkerAsync(gradient);
         }
 
@@ -243,6 +249,21 @@ namespace CG_lab1
         private void button3_Click(object sender, EventArgs e)
         {
             UndoLastChange();
+        }
+
+        private void линейноеРастяжениеToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveImageHistory();
+            LinearStretching filter = new LinearStretching();
+
+            //backgroundWorker1.RunWorkerAsync(filter);
+
+
+            Bitmap resultImage = filter.ApplyLinearStretching(image); //, backgroundWorker1);
+
+            pictureBox1.Image = resultImage;
+            pictureBox1.Refresh();
+            backgroundWorker1.CancelAsync();
         }
     }
 }
