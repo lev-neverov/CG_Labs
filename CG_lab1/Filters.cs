@@ -691,28 +691,47 @@ namespace CG_lab1
 
     public class LinearStretching : Filters
     {
-        private int minR, maxR, minG, maxG, minB, maxB;
+        private double meanR, meanG, meanB;
+        private double stdDeviationR, stdDeviationG, stdDeviationB;
 
-        public void FindMinMaxValues(Bitmap sourceImage)
+        public void CalculateMeanAndStdDev(Bitmap sourceImage)
         {
-            minR = minG = minB = 255;
-            maxR = maxG = maxB = 0;
+            long sumR = 0, sumG = 0, sumB = 0;
+            int totalPixels = sourceImage.Width * sourceImage.Height;
+
+            // средние значения
+            for (int x = 0; x < sourceImage.Width; x++)
+            {
+                for (int y = 0; y < sourceImage.Height; y++)
+                {
+                    Color pixelColor = sourceImage.GetPixel(x, y);
+                    sumR += pixelColor.R;
+                    sumG += pixelColor.G;
+                    sumB += pixelColor.B;
+                }
+            }
+
+            meanR = sumR / (double)totalPixels;
+            meanG = sumG / (double)totalPixels;
+            meanB = sumB / (double)totalPixels;
+
+            // стандартное отклонение
+            double sumSquaredDiffR = 0, sumSquaredDiffG = 0, sumSquaredDiffB = 0;
 
             for (int x = 0; x < sourceImage.Width; x++)
             {
                 for (int y = 0; y < sourceImage.Height; y++)
                 {
                     Color pixelColor = sourceImage.GetPixel(x, y);
-
-                    if (pixelColor.R < minR) minR = pixelColor.R;
-                    if (pixelColor.G < minG) minG = pixelColor.G;
-                    if (pixelColor.B < minB) minB = pixelColor.B;
-
-                    if (pixelColor.R > maxR) maxR = pixelColor.R;
-                    if (pixelColor.G > maxG) maxG = pixelColor.G;
-                    if (pixelColor.B > maxB) maxB = pixelColor.B;
+                    sumSquaredDiffR += Math.Pow(pixelColor.R - meanR, 2);
+                    sumSquaredDiffG += Math.Pow(pixelColor.G - meanG, 2);
+                    sumSquaredDiffB += Math.Pow(pixelColor.B - meanB, 2);
                 }
             }
+
+            stdDeviationR = Math.Sqrt(sumSquaredDiffR / totalPixels);
+            stdDeviationG = Math.Sqrt(sumSquaredDiffG / totalPixels);
+            stdDeviationB = Math.Sqrt(sumSquaredDiffB / totalPixels);
         }
 
         public override Color calculateNewPixelColor(Bitmap sourceImage, int x, int y)
@@ -720,18 +739,18 @@ namespace CG_lab1
             // Получаем цвет исходного пикселя
             Color sourceColor = sourceImage.GetPixel(x, y);
 
-            // Применяем линейное растяжение с использованием найденных min и max значений
-            int newR = (maxR - minR > 0) ? Clamp((sourceColor.R - minR) * 255 / (maxR - minR), 0, 255) : sourceColor.R;
-            int newG = (maxG - minG > 0) ? Clamp((sourceColor.G - minG) * 255 / (maxG - minG), 0, 255) : sourceColor.G;
-            int newB = (maxB - minB > 0) ? Clamp((sourceColor.B - minB) * 255 / (maxB - minB), 0, 255) : sourceColor.B;
+            // Применяем нормальное отклонение для растяжения
+            int newR = Clamp((int)((sourceColor.R - meanR) / stdDeviationR * 128 + 128), 0, 255);
+            int newG = Clamp((int)((sourceColor.G - meanG) / stdDeviationG * 128 + 128), 0, 255);
+            int newB = Clamp((int)((sourceColor.B - meanB) / stdDeviationB * 128 + 128), 0, 255);
 
             return Color.FromArgb(newR, newG, newB);
         }
 
         public Bitmap ApplyLinearStretching(Bitmap sourceImage) //, BackgroundWorker worker)
         {
-            // Находим минимальные и максимальные значения
-            FindMinMaxValues(sourceImage);
+            // Находим средние значения и стандартные отклонения
+            CalculateMeanAndStdDev(sourceImage);
 
             Bitmap resultImage = new Bitmap(sourceImage.Width, sourceImage.Height);
 
@@ -748,7 +767,6 @@ namespace CG_lab1
                     resultImage.SetPixel(x, y, newColor);
                 }
 
-                // Обновляем прогресс
                 int progressPercentage = (int)((float)x / sourceImage.Width * 100);
                 //worker.ReportProgress(progressPercentage);
             }
@@ -757,6 +775,7 @@ namespace CG_lab1
             return resultImage;
         }
     }
+
 
 }
 
